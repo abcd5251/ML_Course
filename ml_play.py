@@ -52,8 +52,8 @@ def ml_loop():
             ball_x=scene_info.ball[0]
             platform_x=scene_info.platform[0]
             if ball_x>platform_x:
-                comm.send_instruction(scene_info.frame, PlatformAction.Move_RIGHT)
+                comm.send_instruction(scene_info.frame, PlatformAction.MOVE_RIGHT)
             elif ball_x<platform_x:
                 comm.send_instruction(scene_info.frame, PlatformAction.MOVE_LEFT)
             else:
-                comm.send_instruction(scene_info.frame, PlatformAction.MOVE_LEFT)
+                comm.send_instruction(scene_info.frame, PlatformAction.NONE)
