@@ -6,7 +6,7 @@ import games.arkanoid.communication as comm
 from games.arkanoid.communication import ( \
     SceneInfo, GameStatus, PlatformAction
 )
-
+import numpy as np
 def ml_loop():
     """
     The main loop of the machine learning process
@@ -25,7 +25,10 @@ def ml_loop():
 
     # 2. Inform the game process that ml process is ready before start the loop.
     comm.ml_ready()
-
+    Frames = []
+    Balls_x = []
+    Balls_y = []
+    PlatformPos = []
     # 3. Start an endless loop.
     while True:
         # 3.1. Receive the scene information sent from the game process.
@@ -43,17 +46,43 @@ def ml_loop():
             continue
 
         # 3.3. Put the code here to handle the scene information
-
+        ball_x=scene_info.ball[0]
+        ball_y=scene_info.ball[1]
+        platform_x=scene_info.platform[0]
+        platform_y=scene_info.platform[1]      
+        Balls_x.append(ball_x)
+        Balls_y.append(ball_y)
+        
+        if len(Balls_x)<=2:
+            ball_willbe_x=platform_x
+        if len(Balls_x)>2:
+            vectors_x=Balls_x[-1]-Balls_x[-2]
+            vectors_y=Balls_y[-1]-Balls_y[-2]
+        #Balls_next_x = np.array(Balls[1:])
+        #vectors = Balls_next - Balls[:-1]
+        #last_x=int(vectors[-1:,:-1]) 抓最後一個 但是會持續變動
+        #last_y=int(vectors[-1:,1:])
+            if vectors_y != 0:
+                if vectors_y<0:
+                    vectors_y*=-1
+                time=(platform_y-ball_y)/vectors_y
+                ball_willbe_x=ball_x+(vectors_x*time)
+        #195,0 最右邊跟最左邊
+        if ball_willbe_x<0:
+              temp=0-ball_willbe_x
+              ball_willbe_x=temp
+        elif ball_willbe_x>195:
+            temp=ball_willbe_x-195
+            ball_willbe_x=195-temp
         # 3.4. Send the instruction for this frame to the game process
         if not ball_served:
             comm.send_instruction(scene_info.frame, PlatformAction.SERVE_TO_LEFT)
             ball_served = True
-        else:
-            ball_x=scene_info.ball[0]
-            platform_x=scene_info.platform[0]
-            if ball_x>platform_x:
+        else:                     
+            if ball_willbe_x>platform_x+18:
                 comm.send_instruction(scene_info.frame, PlatformAction.MOVE_RIGHT)
-            elif ball_x<platform_x:
+               
+            elif ball_willbe_x<platform_x+18:
                 comm.send_instruction(scene_info.frame, PlatformAction.MOVE_LEFT)
             else:
                 comm.send_instruction(scene_info.frame, PlatformAction.NONE)
